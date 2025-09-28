@@ -1,3 +1,4 @@
+# app.py
 from datetime import datetime, timedelta
 import time
 import pytz
@@ -49,3 +50,32 @@ else:
             "en_curso": True
         })
         st.rerun()
+
+# === HISTORIAL EN EXPANDER ===
+with st.expander("📂 Historial de mojadas"):
+    registros = list(mojadas_col.find().sort("inicio", -1))
+    if registros:
+        for i, reg in enumerate(registros, 1):
+            inicio = to_datetime_local(reg["inicio"]).strftime("%Y-%m-%d %H:%M:%S")
+            fin = reg.get("fin")
+            duracion = None
+            if fin:
+                fin_local = to_datetime_local(fin)
+                duracion = str(fin_local - to_datetime_local(reg["inicio"]))
+                fin_str = fin_local.strftime("%Y-%m-%d %H:%M:%S")
+            else:
+                fin_str = "⏳ En curso"
+                duracion = "..."
+
+            st.markdown(f"""
+            **#{i}**
+            - Inicio: `{inicio}`
+            - Fin: `{fin_str}`
+            - Duración: `{duracion}`
+            """)
+            if st.button(f"🗑️ Borrar registro #{i}", key=f"del_{reg['_id']}"):
+                mojadas_col.delete_one({"_id": reg["_id"]})
+                st.warning(f"Registro #{i} eliminado.")
+                st.rerun()
+    else:
+        st.info("No hay registros aún.")
